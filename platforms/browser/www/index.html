@@ -1,0 +1,270 @@
+<!DOCTYPE html>
+<html>
+
+<head>
+    <meta charset="utf-8">
+    <meta name="viewport" content="initial-scale=1, maximum-scale=1, user-scalable=no, width=device-width">
+
+    <title>Locais por perto</title>
+
+    <script src="key.js"></script>
+
+    <link rel="stylesheet" href="http://code.jquery.com/mobile/1.4.5/jquery.mobile-1.4.5.min.css" />
+    <script src="http://code.jquery.com/jquery-1.11.1.min.js"></script>
+    <script src="http://code.jquery.com/mobile/1.4.5/jquery.mobile-1.4.5.min.js"></script>
+
+    <script src="https://maps.googleapis.com/maps/api/js?key=AIzaSyDid4-fwxKWBmpdvdXF7I2G4z1aBvav3fw"></script>
+
+
+    <style>
+        #container {
+            margin: 6px;
+        }
+
+        #btnLocation {
+            display: none;
+        }
+
+        #map-canvas {
+            height: 400px;
+            width: 100
+        }
+    </style>
+
+    <script>
+        var xmlhttp;
+        var resultArray;
+        var options;
+
+        window.onload = function() {
+            //document.addEventListener('deviceready', init);
+
+            showLoading();
+            init();
+        }
+
+        function init() {
+
+
+            options = {
+                maximumAge: 3000,
+                timeout: 5000,
+                enableHighAccuracy: true
+            };
+
+            $('#locais').on('click', 'li', function() {
+
+                var index = ($(this).closest("li").index());;
+                // resultArray[index]
+
+
+                processSelectedPlace(index);
+
+            });
+
+            navigator.geolocation.getCurrentPosition(success, error, options);
+        }
+
+
+
+        function processSelectedPlace(index) {
+
+            document.getElementById('selectedName').innerHTML = resultArray[index].name;
+
+
+            var selectedLat = resultArray[index].geometry.location.lat;
+
+            document.getElementById('selectedLat').innerHTML = selectedLat;
+
+            var selectedLng = resultArray[index].geometry.location.lng;
+
+            document.getElementById('selectedLng').innerHTML = selectedLng;
+
+
+            var mapOptions = {
+                center: {
+                    lat: selectedLat,
+                    lng: selectedLng
+                },
+                mapTypeControl: true,
+                mapTypeControlOptions: {
+                    style: google.maps.MapTypeControlStyle.DEFAULT ,
+                    mapTypeIds: ['roadmap', 'satellite','hybrid']
+                },
+                zoomControl: true,
+                zoomControlOptions: {
+                    position: google.maps.ControlPosition.LEFT_CENTER
+                },
+                scaleControl: true,
+                streetViewControl: true,
+                streetViewControlOptions: {
+                    position: google.maps.ControlPosition.LEFT_TOP
+                },
+                fullscreenControl: true,
+                zoom: 20
+            };
+
+            var map = new google.maps.Map(document.getElementById('map-canvas'), mapOptions);
+
+            var myLatLng = {
+                lat: selectedLat,
+                lng: selectedLng
+            };
+
+            var marker = new google.maps.Marker({
+                position: myLatLng,
+                map: map,
+                title: resultArray[index].name
+            });
+        }
+
+        function showLoading() {
+
+            var $this = $(this),
+                theme = $this.jqmData("theme") || $.mobile.loader.prototype.options.theme,
+                msgText = $this.jqmData("msgtext") || $.mobile.loader.prototype.options.text,
+                textVisible = $this.jqmData("textvisible") || $.mobile.loader.prototype.options.textVisible,
+                textonly = !!$this.jqmData("textonly");
+            html = $this.jqmData("html") || "";
+
+            $.mobile.loading('show', {
+                text: "carregando locais",
+                textVisible: true,
+                theme: theme,
+                textonly: textonly,
+                html: html
+            });
+        };
+
+
+        function success(position) {
+            var lat = position.coords.latitude;
+            var long = position.coords.longitude;
+
+            localStorage.setItem("currentLat", lat);
+            localStorage.setItem("currentLng", long);
+
+            document.getElementById('lat').innerHTML = lat;
+            document.getElementById('long').innerHTML = long;
+            getAreaInfo(lat, long);
+        }
+
+
+        function getAreaInfo(lat, long) {
+
+            var url = "https://maps.googleapis.com/maps/api/place/nearbysearch/json?location=";
+            url += lat + ",";
+            url += long;
+            url += "&radius=500&type=university&key=" + key;
+            xmlhttp = new XMLHttpRequest();
+
+            xmlhttp.onreadystatechange = processPlace;
+
+            xmlhttp.open("GET", url, true);
+            xmlhttp.send();
+
+        }
+
+
+
+        function processPlace() {
+            var out = "";
+            if (xmlhttp.readyState == 4) {
+                var theJSON = xmlhttp.responseText;
+
+                var result = JSON.parse(theJSON);
+                resultArray = result.results;
+                for (var x = 0; x < resultArray.length; x++) {
+
+
+                    out += "<li><a href=\"index.html#page2\"><h3>" + resultArray[x].name + "</h3><p>" + resultArray[x].vicinity + "</p></a></li>";
+
+                }
+
+                document.getElementById('locais').innerHTML += out;
+
+                $('#locais').listview('refresh');
+                $.mobile.loading("hide");
+            }
+        }
+
+        function error(e) {
+            $.mobile.loading("hide");
+            alert(e.message);
+        }
+    </script>
+</head>
+
+<body>
+    <div data-role="page" id="page1">
+
+        <div data-role="header">
+            <h1>Locais Próximos</h1>
+
+            <div id=current_pos>
+                <label for="lat">Latitude:</label>
+                <ouput id="lat"></ouput>
+
+                <label for="lat">Longitude:</label>
+                <ouput id="long"></ouput>
+            </div>
+
+            <div id="search_bar">
+                <form>
+                    <input id="filter-for-listview" data-type="search" placeholder="procurar...">
+                </form>
+            </div>
+        </div>
+
+        <div data-role="main" class="ui-content">
+
+            <ul id="locais" data-role="listview" data-inset="true" data-filter="true" data-input="#filter-for-listview">
+                <!--<li>
+                    <a href="#">
+                        <h3>IBM PC</h3>
+                        <p>The PC machine was popular in the 80's and many compatible machines were produced.</p>
+                    </a>
+                </li>
+-->
+            </ul>
+            <button onclick="location.href='novo_local.html'">Adicionar novo local</button>
+        </div>
+
+        <div data-role="footer" id="footer">
+
+            <h2>br.ufes.dcel</h2>
+        </div>
+    </div>
+
+
+    <div data-role="page" id="page2">
+        <div data-role="header">
+            <h1>Locais Próximos</h1>
+        </div>
+        <!-- header -->
+        <div data-role="main" class="ui-content">
+
+            <h1>
+                <ouput id="selectedName"></ouput>
+            </h1>
+            <p>Latitude:
+                <ouput id="selectedLat"></ouput>
+            </p>
+            <p>Longitude: <output id="selectedLng"></output></p>
+
+            <div id="map-canvas"></div>
+
+        </div>
+        <!-- main -->
+        <div data-role="footer" id="footer">
+            <h2>br.ufes.dcel</h2>
+        </div>
+        <!-- footer -->
+    </div>
+    <!-- page -->
+
+
+    <!--<script type="text/javascript" src="cordova.js"> </script>!-->
+</body>
+
+</html>

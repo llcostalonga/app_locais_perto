@@ -1,0 +1,145 @@
+<!DOCTYPE html>
+<html>
+
+<head>
+    <meta charset="utf-8">
+    <meta name="viewport" content="initial-scale=1, maximum-scale=1, user-scalable=no, width=device-width">
+    <title>Locais por Perto</title>
+    <link rel="stylesheet" href="http://code.jquery.com/mobile/1.4.5/jquery.mobile-1.4.5.min.css" />
+    <script src="http://code.jquery.com/jquery-1.11.1.min.js"></script>
+    <script src="http://code.jquery.com/mobile/1.4.5/jquery.mobile-1.4.5.min.js"></script>
+    
+    <script src="key.js"></script>
+    
+    <script type="text/javascript" src="cordova.js"></script>
+
+</head>
+
+
+<script>
+    var lat;
+    var lng;
+
+    window.onload = function() {
+
+        document.getElementById('btnNovoLocal').addEventListener('click', addNewPlace)
+
+        lat = localStorage.getItem('currentLat');
+        lng = localStorage.getItem('currentLng');
+
+        document.getElementById('lat').innerHTML = lat;
+        document.getElementById('long').innerHTML = lng;
+
+    }
+
+    function addNewPlace() {
+
+
+        var currentPosition = {
+            lat: parseFloat(lat),
+            lng: parseFloat(lng)
+        };
+
+        var newPlace = {
+            location: currentPosition,
+            accuracy: 50,
+            name: document.getElementById("nomeLocal").value,
+            phone_number: "+55(27)3312-1510",
+            address: "Universidade Federal do Espírito Santo, Campus São Mateus, BR-101, Km60",
+            types: ["university"],
+            website: "http://www.ceunes.ufes.br/",
+            language: "pt-BR"
+        };
+
+
+
+
+
+
+
+        /*
+                var url = "https://maps.googleapis.com/maps/api/place/add/json?location={ lat:";
+                url += lat + ",lng:";
+                url += long;
+                url += "}name:" + nomeLocal
+                url += "}&key=" + key;
+                xmlhttp = new XMLHttpRequest();*/
+
+        xmlhttp = new XMLHttpRequest();
+
+        var url = "https://maps.googleapis.com/maps/api/place/add/json?key=" + key;
+
+        xmlhttp.onreadystatechange = processPlaceAddition;
+
+        xmlhttp.open("POST", url, true);
+        
+        //alert(xmlhttp.status);
+
+        var data = JSON.stringify(newPlace);
+        xmlhttp.send(data);
+        
+        //alert(data);
+
+        xmlhttp.send(data);
+
+
+    }
+
+    function processPlaceAddition() {
+        var out = "";
+        if (xmlhttp.readyState == 4) {
+            var theJSON = xmlhttp.responseText;
+
+            var result = JSON.parse(theJSON);
+            var resultMsg = result.status;
+            if(result.status=="OK"){
+                alert("Novo local adicionado (place_id: " + result.place_id + ")");
+            }
+            //alert(result.responseText);
+            alert(resultMsg);
+
+        }
+    }
+</script>
+
+<body>
+    <div data-role="page" id="page1">
+
+        <div data-role="header">
+            <h1>Controle de Manutenção CEUNES</h1>
+        </div>
+        <!-- header -->
+
+        <div data-role="main" class="ui-content">
+
+            <div id="container">
+
+                <div id=current_pos>
+                    <label for="nomeLocal">Nome do Novo Local:</label>
+                    <input type="text" id="nomeLocal" />
+
+                    <label for="lat">Latitude:</label>
+                    <ouput id="lat"></ouput>
+
+                    <label for="lat">Longitude:</label>
+                    <ouput id="long"></ouput>
+                </div>
+
+
+                <button id="btnNovoLocal">Adicionar Local</button>
+
+                <button onclick="location.href='index.html'">Cancelar</button>
+            </div>
+
+        </div>
+        <!-- main -->
+
+        <div data-role="footer" id="footer">
+            <h2>br.ufes.dcel</h2>
+        </div>
+        <!-- footer -->
+    </div>
+    <!--page!-->
+</body>
+
+</html>
